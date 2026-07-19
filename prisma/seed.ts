@@ -1,8 +1,14 @@
 import { PrismaClient } from "@prisma/client";
+import { deriveVibeTags } from "../src/lib/bgg/vibeHeuristic";
+import {
+  deriveSkillLevel,
+  deriveLuckLevel,
+  deriveIsCooperative,
+} from "../src/lib/bgg/skillLuck";
 
 const prisma = new PrismaClient();
 
-const games = [
+const rawGames = [
   {
     bggId: 13,
     name: "Catan",
@@ -18,8 +24,6 @@ const games = [
       "Trade, build, and settle a shared island, racing to 10 victory points.",
     categories: ["Negotiation", "Economic"],
     mechanisms: ["Dice Rolling", "Trading", "Network and Route Building"],
-    autoVibeTags: ["competitive-cutthroat"],
-    vibeTags: ["competitive-cutthroat"],
   },
   {
     bggId: 178900,
@@ -36,8 +40,6 @@ const games = [
       "Two rival spymasters give one-word clues to lead their teammates to the right agents.",
     categories: ["Party Game", "Word Game"],
     mechanisms: ["Team-Based Game", "Communication Limits"],
-    autoVibeTags: ["chaotic-party"],
-    vibeTags: ["chaotic-party"],
   },
   {
     bggId: 266192,
@@ -54,10 +56,26 @@ const games = [
       "Attract a beautiful and diverse collection of birds to your wildlife preserves.",
     categories: ["Animals", "Card Game"],
     mechanisms: ["Engine Building", "Hand Management", "Set Collection"],
-    autoVibeTags: ["relaxing-chill", "brain-burner"],
-    vibeTags: ["relaxing-chill", "brain-burner"],
   },
 ];
+
+const games = rawGames.map((g) => {
+  const vibeTags = deriveVibeTags({
+    categories: g.categories,
+    mechanisms: g.mechanisms,
+    weight: g.weight,
+    playingTime: g.playingTime,
+    maxPlayers: g.maxPlayers,
+  });
+  return {
+    ...g,
+    autoVibeTags: vibeTags,
+    vibeTags,
+    skillLevel: deriveSkillLevel({ mechanisms: g.mechanisms, weight: g.weight }),
+    luckLevel: deriveLuckLevel({ mechanisms: g.mechanisms, weight: g.weight }),
+    isCooperative: deriveIsCooperative(g.mechanisms),
+  };
+});
 
 async function main() {
   for (const game of games) {

@@ -1,6 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { fetchCollection, fetchThings } from "@/lib/bgg/client";
 import { deriveVibeTags } from "@/lib/bgg/vibeHeuristic";
+import {
+  deriveSkillLevel,
+  deriveLuckLevel,
+  deriveIsCooperative,
+} from "@/lib/bgg/skillLuck";
 
 const DETAIL_BATCH_SIZE = 20;
 const STALE_AFTER_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
@@ -140,10 +145,11 @@ export async function advanceImportJob(
     const detail = thingsById.get(game.bggId);
     if (!detail) continue;
 
+    const weight = detail.weight ?? game.weight;
     const vibeTags = deriveVibeTags({
       categories: detail.categories,
       mechanisms: detail.mechanisms,
-      weight: detail.weight ?? game.weight,
+      weight,
       playingTime: detail.playingTime ?? game.playingTime,
       maxPlayers: detail.maxPlayers ?? game.maxPlayers,
     });
@@ -159,11 +165,14 @@ export async function advanceImportJob(
         playingTime: detail.playingTime ?? game.playingTime,
         minPlayTime: detail.minPlayTime ?? game.minPlayTime,
         maxPlayTime: detail.maxPlayTime ?? game.maxPlayTime,
-        weight: detail.weight ?? game.weight,
+        weight,
         bggRating: detail.bggRating ?? game.bggRating,
         bggRank: detail.bggRank ?? game.bggRank,
         autoVibeTags: vibeTags,
         vibeTags: game.vibeTagsOverridden ? undefined : vibeTags,
+        skillLevel: deriveSkillLevel({ mechanisms: detail.mechanisms, weight }),
+        luckLevel: deriveLuckLevel({ mechanisms: detail.mechanisms, weight }),
+        isCooperative: deriveIsCooperative(detail.mechanisms),
         lastSyncedAt: new Date(),
       },
     });

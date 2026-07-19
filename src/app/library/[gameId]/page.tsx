@@ -64,9 +64,14 @@ export default async function GameDetailPage({
       </div>
 
       <p className="mt-1 text-sm text-gray-600">
-        {game.minPlayers}–{game.maxPlayers} players · {game.playingTime} min ·
-        weight {game.weight?.toFixed(1) ?? "—"}
+        {game.minPlayers}–{game.maxPlayers} players · {game.playingTime} min
         {game.bggRating ? ` · BGG rating ${game.bggRating.toFixed(1)}` : ""}
+        {game.isCooperative ? " · co-op" : ""}
+      </p>
+      <p className="mt-1 text-sm text-gray-500">
+        {game.skillLevel ? `${game.skillLevel} skill` : "skill unknown"}
+        {" · "}
+        {game.luckLevel ? `${game.luckLevel} luck` : "luck unknown"}
       </p>
 
       {game.description && (

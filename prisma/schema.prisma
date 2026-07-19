@@ -76,6 +76,12 @@ enum ImportJobStatus {
   error
 }
 
+enum Level {
+  low
+  medium
+  high
+}
+
 model Game {
   id String @id @default(cuid())
 
@@ -94,6 +100,10 @@ model Game {
   weight    Float?
   bggRating Float?
   bggRank   Int?
+
+  skillLevel    Level?
+  luckLevel     Level?
+  isCooperative Boolean @default(false)
 
   description String? @db.Text
 
