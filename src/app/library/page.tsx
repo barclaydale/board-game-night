@@ -74,6 +74,9 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
       <div className="mb-8 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Library</h1>
         <div className="flex gap-4 text-sm text-gray-500">
+          <Link href="/recommend" className="underline">
+            Recommend
+          </Link>
           <Link href="/settings/import" className="underline">
             Import from BGG
           </Link>

@@ -11,6 +11,10 @@ export default async function Home() {
       </h1>
       <p className="text-sm text-gray-500">{session?.user?.email}</p>
 
+      <Link href="/recommend" className="text-sm underline">
+        What should we play tonight?
+      </Link>
+
       <Link href="/library" className="text-sm underline">
         Browse the library
       </Link>
