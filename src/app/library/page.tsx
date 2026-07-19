@@ -13,9 +13,14 @@ export default async function LibraryPage() {
     <div className="mx-auto max-w-3xl px-6 py-12">
       <div className="mb-8 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Library</h1>
-        <Link href="/" className="text-sm text-gray-500 underline">
-          Home
-        </Link>
+        <div className="flex gap-4 text-sm text-gray-500">
+          <Link href="/settings/import" className="underline">
+            Import from BGG
+          </Link>
+          <Link href="/" className="underline">
+            Home
+          </Link>
+        </div>
       </div>
 
       {games.length === 0 ? (
