@@ -19,6 +19,10 @@ export default async function Home() {
         Browse the library
       </Link>
 
+      <Link href="/plays" className="text-sm underline">
+        Play history
+      </Link>
+
       <form
         action={async () => {
           "use server";

@@ -77,6 +77,9 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
           <Link href="/recommend" className="underline">
             Recommend
           </Link>
+          <Link href="/plays" className="underline">
+            Play history
+          </Link>
           <Link href="/settings/import" className="underline">
             Import from BGG
           </Link>
