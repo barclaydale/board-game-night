@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { auth, signOut } from "@/lib/auth";
 
 export default async function Home() {
@@ -9,6 +10,10 @@ export default async function Home() {
         Hello, {session?.user?.name ?? "friend"}
       </h1>
       <p className="text-sm text-gray-500">{session?.user?.email}</p>
+
+      <Link href="/library" className="text-sm underline">
+        Browse the library
+      </Link>
 
       <form
         action={async () => {
