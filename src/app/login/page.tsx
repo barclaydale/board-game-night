@@ -25,20 +25,6 @@ export default async function LoginPage({
           Sign in with Google
         </button>
       </form>
-
-      <form
-        action={async () => {
-          "use server";
-          await signIn("github", { redirectTo: callbackUrl ?? "/" });
-        }}
-      >
-        <button
-          type="submit"
-          className="rounded-md bg-gray-800 px-4 py-2 text-white"
-        >
-          Sign in with GitHub
-        </button>
-      </form>
     </div>
   );
 }
