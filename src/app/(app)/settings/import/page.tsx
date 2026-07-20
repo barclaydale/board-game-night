@@ -61,29 +61,33 @@ export default function ImportPage() {
     poll(jobId);
   }
 
+  const isRunning =
+    progress.status === "pending_collection" ||
+    progress.status === "fetching_details";
+
   return (
     <div className="mx-auto max-w-xl px-6 py-12">
-      <div className="mb-8 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Import from BoardGameGeek</h1>
-        <Link href="/library" className="text-sm text-gray-500 underline">
-          Library
-        </Link>
-      </div>
+      <h1 className="font-display text-2xl font-semibold text-foreground">
+        📥 Import from BoardGameGeek
+      </h1>
+      <p className="mt-1 text-sm text-muted">
+        Pull your owned games straight into the library.
+      </p>
 
-      <form onSubmit={startImport} className="flex gap-2">
+      <form
+        onSubmit={startImport}
+        className="mt-6 flex gap-2 rounded-2xl border border-border bg-surface p-3"
+      >
         <input
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           placeholder="BGG username"
-          className="flex-1 rounded-md border border-gray-300 px-3 py-2"
+          className="flex-1 rounded-full border border-border bg-background px-4 py-2 placeholder:text-muted"
         />
         <button
           type="submit"
-          disabled={
-            progress.status === "pending_collection" ||
-            progress.status === "fetching_details"
-          }
-          className="rounded-md bg-black px-4 py-2 text-white disabled:opacity-50"
+          disabled={isRunning}
+          className="rounded-full bg-accent px-5 py-2 font-medium text-accent-foreground disabled:opacity-50"
         >
           Import
         </button>
@@ -91,33 +95,33 @@ export default function ImportPage() {
 
       <div className="mt-6 text-sm">
         {progress.status === "idle" && (
-          <p className="text-gray-500">
+          <p className="text-muted">
             Enter a BGG username to import their owned games into the
             library.
           </p>
         )}
-        {progress.status === "pending_collection" && (
-          <p>Waiting on BoardGameGeek to prepare the collection export…</p>
-        )}
-        {progress.status === "fetching_details" && (
-          <p>
-            Fetching game details… {progress.cursor}/{progress.totalGames}
+        {isRunning && (
+          <p className="flex items-center gap-2 text-foreground">
+            <span className="animate-pulse">🎲</span>
+            {progress.status === "pending_collection"
+              ? "Waiting on BoardGameGeek to prepare the collection export…"
+              : `Fetching game details… ${progress.cursor}/${progress.totalGames}`}
           </p>
         )}
         {progress.status === "complete" && (
-          <p className="text-green-700">
-            Done — {progress.totalGames} games synced.{" "}
+          <p className="text-secondary">
+            ✅ Done — {progress.totalGames} games synced.{" "}
             <Link href="/library" className="underline">
               View library
             </Link>
           </p>
         )}
         {progress.status === "error" && (
-          <p className="text-red-700">Error: {progress.error}</p>
+          <p className="text-accent">Error: {progress.error}</p>
         )}
       </div>
 
-      <p className="mt-12 text-xs text-gray-400">
+      <p className="mt-12 text-xs text-muted">
         Powered by{" "}
         <a
           href="https://boardgamegeek.com"

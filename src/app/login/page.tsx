@@ -8,19 +8,25 @@ export default async function LoginPage({
   const { callbackUrl } = await searchParams;
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4">
-      <h1 className="text-2xl font-semibold">Board Game Night</h1>
-      <p className="text-sm text-gray-500">Sign in to continue</p>
+    <div className="flex min-h-full flex-1 flex-col items-center justify-center px-6 text-center">
+      <span className="text-5xl">🎲</span>
+      <h1 className="mt-4 font-display text-3xl font-semibold text-foreground">
+        Board Game Night
+      </h1>
+      <p className="mt-2 text-muted">
+        Your library, and what to play tonight.
+      </p>
 
       <form
         action={async () => {
           "use server";
           await signIn("google", { redirectTo: callbackUrl ?? "/" });
         }}
+        className="mt-8"
       >
         <button
           type="submit"
-          className="rounded-md bg-black px-4 py-2 text-white"
+          className="rounded-full bg-accent px-6 py-3 font-display font-medium text-accent-foreground shadow-sm transition-transform hover:scale-[1.02]"
         >
           Sign in with Google
         </button>

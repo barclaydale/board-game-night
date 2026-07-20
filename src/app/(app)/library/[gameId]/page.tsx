@@ -3,7 +3,13 @@ import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { VIBE_TAGS, type VibeTag } from "@/lib/bgg/vibeHeuristic";
+import {
+  VIBE_TAGS,
+  VIBE_EMOJI,
+  VIBE_LABELS,
+  type VibeTag,
+} from "@/lib/bgg/vibeHeuristic";
+import { LEVEL_DOTS } from "@/lib/bgg/skillLuck";
 
 interface GameDetailPageProps {
   params: Promise<{ gameId: string }>;
@@ -54,28 +60,34 @@ export default async function GameDetailPage({
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-12">
-      <Link href="/library" className="text-sm text-gray-500 underline">
+      <Link href="/library" className="text-sm text-muted underline">
         ← Library
       </Link>
 
       <div className="mt-4 flex items-baseline justify-between">
-        <h1 className="text-2xl font-semibold">{game.name}</h1>
-        <span className="text-sm text-gray-500">{game.yearPublished}</span>
+        <h1 className="font-display text-2xl font-semibold text-foreground">
+          {game.name}
+        </h1>
+        <span className="text-sm text-muted">{game.yearPublished}</span>
       </div>
 
-      <p className="mt-1 text-sm text-gray-600">
+      <p className="mt-2 text-sm text-muted">
         {game.minPlayers}–{game.maxPlayers} players · {game.playingTime} min
-        {game.bggRating ? ` · BGG rating ${game.bggRating.toFixed(1)}` : ""}
-        {game.isCooperative ? " · co-op" : ""}
+        {game.bggRating ? ` · ★ ${game.bggRating.toFixed(1)}` : ""}
+        {game.isCooperative ? " · 🤝 co-op" : ""}
       </p>
-      <p className="mt-1 text-sm text-gray-500">
-        {game.skillLevel ? `${game.skillLevel} skill` : "skill unknown"}
-        {" · "}
-        {game.luckLevel ? `${game.luckLevel} luck` : "luck unknown"}
-      </p>
+      {(game.skillLevel || game.luckLevel) && (
+        <p className="mt-1 text-sm text-muted">
+          {game.skillLevel &&
+            `${LEVEL_DOTS[game.skillLevel]} ${game.skillLevel} skill`}
+          {game.skillLevel && game.luckLevel ? "  ·  " : ""}
+          {game.luckLevel &&
+            `${LEVEL_DOTS[game.luckLevel]} ${game.luckLevel} luck`}
+        </p>
+      )}
 
       {game.description && (
-        <p className="mt-4 whitespace-pre-line text-sm text-gray-700">
+        <p className="mt-4 whitespace-pre-line text-sm leading-relaxed text-foreground">
           {game.description}
         </p>
       )}
@@ -85,7 +97,7 @@ export default async function GameDetailPage({
           {[...game.categories, ...game.mechanisms].map((label) => (
             <span
               key={label}
-              className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700"
+              className="rounded-full bg-surface px-3 py-1 text-xs text-muted"
             >
               {label}
             </span>
@@ -93,9 +105,11 @@ export default async function GameDetailPage({
         </div>
       )}
 
-      <section className="mt-8">
-        <h2 className="text-sm font-semibold text-gray-700">Vibe tags</h2>
-        <form action={saveVibeTags} className="mt-2 flex flex-col gap-2">
+      <section className="mt-10 rounded-2xl border border-border bg-surface p-5">
+        <h2 className="font-display text-sm font-semibold text-foreground">
+          Vibe tags
+        </h2>
+        <form action={saveVibeTags} className="mt-3 flex flex-col gap-2">
           {VIBE_TAGS.map((tag) => (
             <label key={tag} className="flex items-center gap-2 text-sm">
               <input
@@ -103,26 +117,29 @@ export default async function GameDetailPage({
                 name="vibeTags"
                 value={tag}
                 defaultChecked={game.vibeTags.includes(tag)}
+                className="accent-[var(--accent)]"
               />
-              {tag}
+              {VIBE_EMOJI[tag]} {VIBE_LABELS[tag]}
             </label>
           ))}
           <button
             type="submit"
-            className="mt-2 w-fit rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+            className="mt-2 w-fit rounded-full bg-accent px-4 py-1.5 text-sm font-medium text-accent-foreground"
           >
             Save vibe tags
           </button>
         </form>
       </section>
 
-      <section className="mt-8">
-        <h2 className="text-sm font-semibold text-gray-700">Your rating</h2>
-        <form action={saveRating} className="mt-2 flex items-center gap-2">
+      <section className="mt-6 rounded-2xl border border-border bg-surface p-5">
+        <h2 className="font-display text-sm font-semibold text-foreground">
+          Your rating
+        </h2>
+        <form action={saveRating} className="mt-3 flex items-center gap-2">
           <select
             name="rating"
             defaultValue={myRating?.rating ?? ""}
-            className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+            className="rounded-full border border-border bg-background px-3 py-2 text-sm"
           >
             <option value="" disabled>
               Rate 1–10
@@ -135,7 +152,7 @@ export default async function GameDetailPage({
           </select>
           <button
             type="submit"
-            className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+            className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground"
           >
             Save rating
           </button>

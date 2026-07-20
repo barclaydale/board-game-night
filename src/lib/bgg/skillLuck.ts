@@ -1,5 +1,11 @@
 export type Level = "low" | "medium" | "high";
 
+export const LEVEL_DOTS: Record<Level, string> = {
+  low: "○",
+  medium: "◐",
+  high: "●",
+};
+
 export interface SkillLuckInput {
   mechanisms: string[];
   weight: number | null;

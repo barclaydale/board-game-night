@@ -8,6 +8,22 @@ export const VIBE_TAGS = [
 
 export type VibeTag = (typeof VIBE_TAGS)[number];
 
+export const VIBE_EMOJI: Record<VibeTag, string> = {
+  "chaotic-party": "🎉",
+  "relaxing-chill": "🌿",
+  "brain-burner": "🧠",
+  "competitive-cutthroat": "⚔️",
+  "cooperative-story": "🤝",
+};
+
+export const VIBE_LABELS: Record<VibeTag, string> = {
+  "chaotic-party": "Chaotic party",
+  "relaxing-chill": "Relaxing & chill",
+  "brain-burner": "Brain burner",
+  "competitive-cutthroat": "Competitive",
+  "cooperative-story": "Cooperative",
+};
+
 export interface VibeHeuristicInput {
   categories: string[];
   mechanisms: string[];

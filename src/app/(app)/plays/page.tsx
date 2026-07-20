@@ -81,21 +81,20 @@ export default async function PlaysPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-12">
-      <div className="mb-8 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Play history</h1>
-        <Link href="/library" className="text-sm text-gray-500 underline">
-          Library
-        </Link>
-      </div>
+      <h1 className="font-display text-2xl font-semibold text-foreground">
+        📝 Play history
+      </h1>
 
-      <section>
-        <h2 className="text-sm font-semibold text-gray-700">Log a play</h2>
-        <form action={logPlay} className="mt-2 flex flex-col gap-3">
+      <section className="mt-6 rounded-2xl border border-border bg-surface p-6">
+        <h2 className="font-display text-sm font-semibold text-foreground">
+          Log a play
+        </h2>
+        <form action={logPlay} className="mt-3 flex flex-col gap-3">
           <select
             name="gameId"
             required
             defaultValue=""
-            className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+            className="rounded-full border border-border bg-background px-4 py-2 text-sm"
           >
             <option value="" disabled>
               Which game?
@@ -112,25 +111,30 @@ export default async function PlaysPage() {
               type="date"
               name="playedAt"
               defaultValue={new Date().toISOString().slice(0, 10)}
-              className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className="rounded-full border border-border bg-background px-4 py-2 text-sm"
             />
             <input
               type="number"
               name="durationMinutes"
               placeholder="Duration (min)"
               min={1}
-              className="w-40 rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className="w-40 rounded-full border border-border bg-background px-4 py-2 text-sm placeholder:text-muted"
             />
           </div>
 
-          <fieldset className="text-sm">
-            <legend className="mb-1">Who played?</legend>
+          <fieldset className="text-sm text-foreground">
+            <legend className="mb-1 text-muted">Who played?</legend>
             {users.map((u) => (
               <label
                 key={u.id}
                 className="mr-4 inline-flex items-center gap-1"
               >
-                <input type="checkbox" name="participants" value={u.id} />
+                <input
+                  type="checkbox"
+                  name="participants"
+                  value={u.id}
+                  className="accent-[var(--accent)]"
+                />
                 {u.name}
               </label>
             ))}
@@ -140,19 +144,19 @@ export default async function PlaysPage() {
             type="text"
             name="guestNames"
             placeholder="Guests (comma separated)"
-            className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+            className="rounded-full border border-border bg-background px-4 py-2 text-sm placeholder:text-muted"
           />
 
           <textarea
             name="notes"
             placeholder="Notes (optional)"
             rows={2}
-            className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+            className="rounded-2xl border border-border bg-background px-4 py-2 text-sm placeholder:text-muted"
           />
 
           <button
             type="submit"
-            className="w-fit rounded-md bg-black px-4 py-2 text-sm text-white"
+            className="w-fit rounded-full bg-accent px-5 py-2 text-sm font-medium text-accent-foreground"
           >
             Log play
           </button>
@@ -160,11 +164,15 @@ export default async function PlaysPage() {
       </section>
 
       <section className="mt-10">
-        <h2 className="text-sm font-semibold text-gray-700">History</h2>
+        <h2 className="font-display text-sm font-semibold text-foreground">
+          History
+        </h2>
         {plays.length === 0 ? (
-          <p className="mt-2 text-sm text-gray-500">No plays logged yet.</p>
+          <p className="mt-3 rounded-2xl border border-dashed border-border bg-surface p-8 text-center text-muted">
+            No plays logged yet — log your first one above.
+          </p>
         ) : (
-          <ul className="mt-2 flex flex-col gap-3">
+          <ul className="mt-3 flex flex-col gap-3">
             {plays.map((play) => {
               const names = play.participants.map(
                 (p) => p.user?.name ?? p.guestName ?? "?",
@@ -172,35 +180,31 @@ export default async function PlaysPage() {
               return (
                 <li
                   key={play.id}
-                  className="rounded-md border border-gray-200 p-3 text-sm"
+                  className="rounded-2xl border border-border bg-surface p-4 text-sm"
                 >
                   <div className="flex items-baseline justify-between">
                     <Link
                       href={`/library/${play.game.id}`}
-                      className="font-medium underline"
+                      className="font-display font-medium text-foreground underline"
                     >
                       {play.game.name}
                     </Link>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-muted">
                       {play.playedAt.toISOString().slice(0, 10)}
                     </span>
                   </div>
                   {names.length > 0 && (
-                    <p className="mt-1 text-gray-600">
-                      with {names.join(", ")}
-                    </p>
+                    <p className="mt-1 text-muted">with {names.join(", ")}</p>
                   )}
                   {play.durationMinutes && (
-                    <p className="mt-1 text-xs text-gray-500">
+                    <p className="mt-1 text-xs text-muted">
                       {play.durationMinutes} min
                     </p>
                   )}
                   {play.notes && (
-                    <p className="mt-1 text-xs text-gray-500">
-                      {play.notes}
-                    </p>
+                    <p className="mt-1 text-xs text-muted">{play.notes}</p>
                   )}
-                  <p className="mt-1 text-xs text-gray-400">
+                  <p className="mt-1 text-xs text-muted">
                     logged by {play.loggedByUser.name}
                   </p>
                 </li>

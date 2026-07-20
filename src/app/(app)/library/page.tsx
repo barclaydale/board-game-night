@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { VIBE_TAGS } from "@/lib/bgg/vibeHeuristic";
+import { VIBE_TAGS, VIBE_EMOJI, VIBE_LABELS } from "@/lib/bgg/vibeHeuristic";
+import { LEVEL_DOTS } from "@/lib/bgg/skillLuck";
 
 export const dynamic = "force-dynamic";
 
@@ -69,43 +70,31 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
   const hasFilters =
     q || vibe || players || maxDuration || minRating || coop || skill || luck;
 
+  const selectClass =
+    "rounded-full border border-border bg-surface px-4 py-2 text-sm text-foreground";
+
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
-      <div className="mb-8 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Library</h1>
-        <div className="flex gap-4 text-sm text-gray-500">
-          <Link href="/recommend" className="underline">
-            Recommend
-          </Link>
-          <Link href="/plays" className="underline">
-            Play history
-          </Link>
-          <Link href="/settings/import" className="underline">
-            Import from BGG
-          </Link>
-          <Link href="/" className="underline">
-            Home
-          </Link>
-        </div>
-      </div>
+      <h1 className="font-display text-2xl font-semibold text-foreground">
+        📚 Library
+      </h1>
+      <p className="mt-1 text-sm text-muted">
+        {games.length} game{games.length === 1 ? "" : "s"}
+      </p>
 
-      <form className="mb-8 flex flex-wrap gap-2" action="/library">
+      <form className="mt-6 mb-8 flex flex-wrap gap-2" action="/library">
         <input
           type="text"
           name="q"
           defaultValue={q}
           placeholder="Search by name"
-          className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm"
+          className="flex-1 rounded-full border border-border bg-surface px-4 py-2 text-sm placeholder:text-muted"
         />
-        <select
-          name="vibe"
-          defaultValue={vibe ?? ""}
-          className="rounded-md border border-gray-300 px-3 py-2 text-sm"
-        >
+        <select name="vibe" defaultValue={vibe ?? ""} className={selectClass}>
           <option value="">Any vibe</option>
           {VIBE_TAGS.map((tag) => (
             <option key={tag} value={tag}>
-              {tag}
+              {VIBE_EMOJI[tag]} {VIBE_LABELS[tag]}
             </option>
           ))}
         </select>
@@ -115,7 +104,7 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
           defaultValue={players}
           placeholder="# players"
           min={1}
-          className="w-24 rounded-md border border-gray-300 px-3 py-2 text-sm"
+          className="w-24 rounded-full border border-border bg-surface px-4 py-2 text-sm placeholder:text-muted"
         />
         <input
           type="number"
@@ -124,7 +113,7 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
           placeholder="Max minutes"
           min={5}
           step={5}
-          className="w-28 rounded-md border border-gray-300 px-3 py-2 text-sm"
+          className="w-32 rounded-full border border-border bg-surface px-4 py-2 text-sm placeholder:text-muted"
         />
         <input
           type="number"
@@ -134,47 +123,35 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
           min={1}
           max={10}
           step={0.5}
-          className="w-32 rounded-md border border-gray-300 px-3 py-2 text-sm"
+          className="w-36 rounded-full border border-border bg-surface px-4 py-2 text-sm placeholder:text-muted"
         />
-        <select
-          name="coop"
-          defaultValue={coop ?? ""}
-          className="rounded-md border border-gray-300 px-3 py-2 text-sm"
-        >
+        <select name="coop" defaultValue={coop ?? ""} className={selectClass}>
           <option value="">Co-op or competitive</option>
-          <option value="coop">Co-op</option>
-          <option value="competitive">Competitive</option>
+          <option value="coop">🤝 Co-op</option>
+          <option value="competitive">⚔️ Competitive</option>
         </select>
-        <select
-          name="skill"
-          defaultValue={skill ?? ""}
-          className="rounded-md border border-gray-300 px-3 py-2 text-sm"
-        >
+        <select name="skill" defaultValue={skill ?? ""} className={selectClass}>
           <option value="">Any skill level</option>
-          <option value="low">Low skill</option>
-          <option value="medium">Medium skill</option>
-          <option value="high">High skill</option>
+          <option value="low">○ Low skill</option>
+          <option value="medium">◐ Medium skill</option>
+          <option value="high">● High skill</option>
         </select>
-        <select
-          name="luck"
-          defaultValue={luck ?? ""}
-          className="rounded-md border border-gray-300 px-3 py-2 text-sm"
-        >
+        <select name="luck" defaultValue={luck ?? ""} className={selectClass}>
           <option value="">Any luck level</option>
-          <option value="low">Low luck</option>
-          <option value="medium">Medium luck</option>
-          <option value="high">High luck</option>
+          <option value="low">○ Low luck</option>
+          <option value="medium">◐ Medium luck</option>
+          <option value="high">● High luck</option>
         </select>
         <button
           type="submit"
-          className="rounded-md border border-gray-300 px-4 py-2 text-sm"
+          className="rounded-full bg-accent px-5 py-2 text-sm font-medium text-accent-foreground"
         >
           Filter
         </button>
         {hasFilters && (
           <Link
             href="/library"
-            className="flex items-center px-2 text-sm text-gray-500 underline"
+            className="flex items-center px-2 text-sm text-muted underline"
           >
             Clear
           </Link>
@@ -182,42 +159,53 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
       </form>
 
       {games.length === 0 ? (
-        <p className="text-gray-500">No games match.</p>
+        <p className="rounded-2xl border border-dashed border-border bg-surface p-8 text-center text-muted">
+          No games match. Try loosening the filters, or{" "}
+          <Link href="/settings/import" className="text-accent underline">
+            import your BGG collection
+          </Link>
+          .
+        </p>
       ) : (
         <ul className="flex flex-col gap-4">
           {games.map((game) => (
             <li key={game.id}>
               <Link
                 href={`/library/${game.id}`}
-                className="block rounded-md border border-gray-200 p-4 hover:border-gray-400"
+                className="block rounded-2xl border border-border bg-surface p-5 shadow-sm transition-colors hover:border-accent"
               >
                 <div className="flex items-baseline justify-between">
-                  <h2 className="text-lg font-medium">{game.name}</h2>
-                  <span className="text-sm text-gray-500">
+                  <h2 className="font-display text-lg font-medium text-foreground">
+                    {game.name}
+                  </h2>
+                  <span className="text-sm text-muted">
                     {game.yearPublished}
                   </span>
                 </div>
-                <p className="mt-1 text-sm text-gray-600">
+                <p className="mt-1 text-sm text-muted">
                   {game.minPlayers}–{game.maxPlayers} players ·{" "}
                   {game.playingTime} min
-                  {game.bggRating
-                    ? ` · BGG ${game.bggRating.toFixed(1)}`
-                    : ""}
-                  {game.isCooperative ? " · co-op" : ""}
+                  {game.bggRating ? ` · ★ ${game.bggRating.toFixed(1)}` : ""}
+                  {game.isCooperative ? " · 🤝 co-op" : ""}
                 </p>
-                <p className="mt-1 text-xs text-gray-500">
-                  {game.skillLevel ? `${game.skillLevel} skill` : ""}
-                  {game.skillLevel && game.luckLevel ? " · " : ""}
-                  {game.luckLevel ? `${game.luckLevel} luck` : ""}
-                </p>
+                {(game.skillLevel || game.luckLevel) && (
+                  <p className="mt-1 text-xs text-muted">
+                    {game.skillLevel &&
+                      `${LEVEL_DOTS[game.skillLevel]} ${game.skillLevel} skill`}
+                    {game.skillLevel && game.luckLevel ? "  ·  " : ""}
+                    {game.luckLevel &&
+                      `${LEVEL_DOTS[game.luckLevel]} ${game.luckLevel} luck`}
+                  </p>
+                )}
                 {game.vibeTags.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-2">
+                  <div className="mt-3 flex flex-wrap gap-2">
                     {game.vibeTags.map((tag) => (
                       <span
                         key={tag}
-                        className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700"
+                        className="rounded-full bg-accent-soft px-3 py-1 text-xs text-accent"
                       >
-                        {tag}
+                        {VIBE_EMOJI[tag as keyof typeof VIBE_EMOJI]}{" "}
+                        {VIBE_LABELS[tag as keyof typeof VIBE_LABELS] ?? tag}
                       </span>
                     ))}
                   </div>
