@@ -21,9 +21,19 @@ export default async function GameDetailPage({
   const game = await prisma.game.findUnique({ where: { id: gameId } });
   if (!game) notFound();
 
-  const myRating = await prisma.rating.findUnique({
-    where: { userId_gameId: { userId, gameId } },
-  });
+  const [myRating, plays] = await Promise.all([
+    prisma.rating.findUnique({
+      where: { userId_gameId: { userId, gameId } },
+    }),
+    prisma.play.findMany({
+      where: { gameId },
+      orderBy: { playedAt: "desc" },
+      include: {
+        loggedByUser: { select: { name: true } },
+        participants: { include: { user: { select: { name: true } } } },
+      },
+    }),
+  ]);
 
   async function saveRating(formData: FormData) {
     "use server";
@@ -79,6 +89,10 @@ export default async function GameDetailPage({
         {game.minPlayers}–{game.maxPlayers} players · {game.playingTime} min
         {game.bggRating ? ` · ★ ${game.bggRating.toFixed(1)}` : ""}
         {game.isCooperative ? " · 🤝 co-op" : ""}
+        {" · "}
+        {plays.length === 0
+          ? "never played"
+          : `played ${plays.length}×`}
       </p>
       {(game.skillLevel || game.luckLevel) && (
         <p className="mt-1 text-sm text-muted">
@@ -149,6 +163,55 @@ export default async function GameDetailPage({
             Save rating
           </button>
         </form>
+      </section>
+
+      <section className="mt-6">
+        <h2 className="font-display text-sm font-semibold text-foreground">
+          Game history
+        </h2>
+        {plays.length === 0 ? (
+          <p className="mt-3 rounded-2xl border border-dashed border-border bg-surface p-6 text-center text-sm text-muted">
+            No plays logged yet.{" "}
+            <Link href="/plays" className="text-accent underline">
+              Log one
+            </Link>
+            .
+          </p>
+        ) : (
+          <ul className="mt-3 flex flex-col gap-3">
+            {plays.map((play) => {
+              const names = play.participants.map(
+                (p) => p.user?.name ?? p.guestName ?? "?",
+              );
+              return (
+                <li
+                  key={play.id}
+                  className="rounded-2xl border border-border bg-surface p-4 text-sm"
+                >
+                  <div className="flex items-baseline justify-between">
+                    <span className="font-medium text-foreground">
+                      {play.playedAt.toISOString().slice(0, 10)}
+                    </span>
+                    {play.durationMinutes && (
+                      <span className="text-xs text-muted">
+                        {play.durationMinutes} min
+                      </span>
+                    )}
+                  </div>
+                  {names.length > 0 && (
+                    <p className="mt-1 text-muted">with {names.join(", ")}</p>
+                  )}
+                  {play.notes && (
+                    <p className="mt-1 text-xs text-muted">{play.notes}</p>
+                  )}
+                  <p className="mt-1 text-xs text-muted">
+                    logged by {play.loggedByUser.name}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </section>
     </div>
   );

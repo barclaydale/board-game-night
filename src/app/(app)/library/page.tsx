@@ -10,18 +10,32 @@ interface LibraryPageProps {
   searchParams: Promise<{
     q?: string;
     vibe?: string;
+    category?: string;
+    mechanism?: string;
     players?: string;
     maxDuration?: string;
     minRating?: string;
     coop?: string;
     skill?: string;
     luck?: string;
+    minPlays?: string;
   }>;
 }
 
 export default async function LibraryPage({ searchParams }: LibraryPageProps) {
-  const { q, vibe, players, maxDuration, minRating, coop, skill, luck } =
-    await searchParams;
+  const {
+    q,
+    vibe,
+    category,
+    mechanism,
+    players,
+    maxDuration,
+    minRating,
+    coop,
+    skill,
+    luck,
+    minPlays,
+  } = await searchParams;
 
   const where: Prisma.GameWhereInput = { inLibrary: true };
 
@@ -30,6 +44,12 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
   }
   if (vibe) {
     where.vibeTags = { has: vibe };
+  }
+  if (category) {
+    where.categories = { has: category };
+  }
+  if (mechanism) {
+    where.mechanisms = { has: mechanism };
   }
   if (players) {
     const n = Number(players);
@@ -62,13 +82,43 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
     where.luckLevel = luck;
   }
 
-  const games = await prisma.game.findMany({
-    where,
-    orderBy: { name: "asc" },
-  });
+  const [gamesWithCounts, libraryTags] = await Promise.all([
+    prisma.game.findMany({
+      where,
+      orderBy: { name: "asc" },
+      include: { _count: { select: { plays: true } } },
+    }),
+    prisma.game.findMany({
+      where: { inLibrary: true },
+      select: { categories: true, mechanisms: true },
+    }),
+  ]);
+
+  const minPlaysNum = minPlays ? Number(minPlays) : null;
+  const games =
+    minPlaysNum !== null && Number.isFinite(minPlaysNum)
+      ? gamesWithCounts.filter((g) => g._count.plays >= minPlaysNum)
+      : gamesWithCounts;
+
+  const allCategories = Array.from(
+    new Set(libraryTags.flatMap((g) => g.categories)),
+  ).sort();
+  const allMechanisms = Array.from(
+    new Set(libraryTags.flatMap((g) => g.mechanisms)),
+  ).sort();
 
   const hasFilters =
-    q || vibe || players || maxDuration || minRating || coop || skill || luck;
+    q ||
+    vibe ||
+    category ||
+    mechanism ||
+    players ||
+    maxDuration ||
+    minRating ||
+    coop ||
+    skill ||
+    luck ||
+    minPlays;
 
   const selectClass =
     "rounded-full border border-border bg-surface px-4 py-2 text-sm text-foreground";
@@ -95,6 +145,30 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
           {VIBE_TAGS.map((tag) => (
             <option key={tag} value={tag}>
               {VIBE_EMOJI[tag]} {VIBE_LABELS[tag]}
+            </option>
+          ))}
+        </select>
+        <select
+          name="category"
+          defaultValue={category ?? ""}
+          className={selectClass}
+        >
+          <option value="">Any category</option>
+          {allCategories.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+        <select
+          name="mechanism"
+          defaultValue={mechanism ?? ""}
+          className={selectClass}
+        >
+          <option value="">Any mechanism</option>
+          {allMechanisms.map((m) => (
+            <option key={m} value={m}>
+              {m}
             </option>
           ))}
         </select>
@@ -142,6 +216,14 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
           <option value="medium">◐ Medium luck</option>
           <option value="high">● High luck</option>
         </select>
+        <input
+          type="number"
+          name="minPlays"
+          defaultValue={minPlays}
+          placeholder="Min times played"
+          min={0}
+          className="w-40 rounded-full border border-border bg-surface px-4 py-2 text-sm placeholder:text-muted"
+        />
         <button
           type="submit"
           className="rounded-full bg-accent px-5 py-2 text-sm font-medium text-accent-foreground"
@@ -187,6 +269,10 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
                   {game.playingTime} min
                   {game.bggRating ? ` · ★ ${game.bggRating.toFixed(1)}` : ""}
                   {game.isCooperative ? " · 🤝 co-op" : ""}
+                  {" · "}
+                  {game._count.plays === 0
+                    ? "never played"
+                    : `played ${game._count.plays}×`}
                 </p>
                 {(game.skillLevel || game.luckLevel) && (
                   <p className="mt-1 text-xs text-muted">

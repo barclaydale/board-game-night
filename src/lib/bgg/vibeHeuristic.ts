@@ -41,7 +41,7 @@ export interface VibeHeuristicInput {
 
 const PARTY_SIGNALS = ["Party Game", "Bluffing", "Acting", "Trivia"];
 const FAST_PACED_SIGNALS = [
-  "Real-Time",
+  "Real-time",
   "Speed Matching",
   "Pattern Recognition",
 ];
@@ -111,6 +111,7 @@ export function deriveVibeTags(input: VibeHeuristicInput): VibeTag[] {
   const isLoudOrFastPaced =
     hasAny(categories, PARTY_SIGNALS) ||
     hasAny(mechanisms, PARTY_SIGNALS) ||
+    hasAny(categories, FAST_PACED_SIGNALS) ||
     hasAny(mechanisms, FAST_PACED_SIGNALS);
 
   if (

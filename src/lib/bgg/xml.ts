@@ -6,6 +6,9 @@ const parser = new XMLParser({
   ignoreAttributes: false,
   attributeNamePrefix: "@_",
   isArray: (tagName) => ARRAY_TAGS.has(tagName),
+  // BGG escapes apostrophes etc. as numeric entities (e.g. &#039;) even
+  // inside attribute values; these are only decoded when htmlEntities is on.
+  htmlEntities: true,
 });
 
 function toArray<T>(value: T | T[] | undefined): T[] {
