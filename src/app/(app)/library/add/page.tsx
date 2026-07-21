@@ -4,11 +4,12 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { searchBggGames, getGameDetails, addGameToLibrary } from "./actions";
 import {
-  searchBggGames,
-  addGameToLibrary,
-  type SearchResultItem,
-} from "./actions";
+  DETAIL_BATCH_SIZE,
+  type SearchListItem,
+  type GameDetails,
+} from "./types";
 
 const SORT_OPTIONS = [
   ["rating-desc", "Rating: high to low"],
@@ -20,18 +21,31 @@ const SORT_OPTIONS = [
 
 type SortKey = (typeof SORT_OPTIONS)[number][0];
 
-function sortResults(
-  results: SearchResultItem[],
-  sort: SortKey,
-): SearchResultItem[] {
+function blankDetails(item: SearchListItem): GameDetails {
+  return {
+    bggId: item.bggId,
+    name: item.name,
+    yearPublished: item.yearPublished,
+    image: null,
+    thumbnail: null,
+    description: null,
+    minPlayers: null,
+    maxPlayers: null,
+    playingTime: null,
+    weight: null,
+    bggRating: null,
+    alreadyInLibrary: false,
+  };
+}
+
+function sortResults(results: GameDetails[], sort: SortKey): GameDetails[] {
   const sorted = [...results];
   switch (sort) {
     case "rating-desc":
       return sorted.sort((a, b) => (b.bggRating ?? -1) - (a.bggRating ?? -1));
     case "rating-asc":
       return sorted.sort(
-        (a, b) =>
-          (a.bggRating ?? Infinity) - (b.bggRating ?? Infinity),
+        (a, b) => (a.bggRating ?? Infinity) - (b.bggRating ?? Infinity),
       );
     case "year-desc":
       return sorted.sort(
@@ -49,30 +63,69 @@ function sortResults(
 export default function AddGamePage() {
   const router = useRouter();
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<SearchResultItem[] | null>(null);
+  const [allMatches, setAllMatches] = useState<SearchListItem[] | null>(null);
+  const [detailsMap, setDetailsMap] = useState<Record<number, GameDetails>>(
+    {},
+  );
+  const [visibleCount, setVisibleCount] = useState(0);
   const [sort, setSort] = useState<SortKey>("rating-desc");
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [searching, setSearching] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [addingId, setAddingId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const sortedResults = useMemo(
-    () => (results ? sortResults(results, sort) : null),
-    [results, sort],
-  );
+  const visibleResults = useMemo(() => {
+    if (!allMatches) return null;
+    const slice = allMatches.slice(0, visibleCount);
+    const merged = slice.map((item) => detailsMap[item.bggId] ?? blankDetails(item));
+    return sortResults(merged, sort);
+  }, [allMatches, detailsMap, visibleCount, sort]);
+
+  async function loadDetailsFor(items: SearchListItem[]) {
+    if (items.length === 0) return;
+    const details = await getGameDetails(items.map((i) => i.bggId));
+    setDetailsMap((prev) => {
+      const next = { ...prev };
+      for (const d of details) next[d.bggId] = d;
+      return next;
+    });
+  }
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     if (!query.trim()) return;
     setSearching(true);
     setError(null);
+    setDetailsMap({});
     try {
-      const data = await searchBggGames(query.trim());
-      setResults(data);
+      const matches = await searchBggGames(query.trim());
+      setAllMatches(matches);
+      const firstBatch = matches.slice(0, DETAIL_BATCH_SIZE);
+      setVisibleCount(firstBatch.length);
+      await loadDetailsFor(firstBatch);
     } catch (err) {
       setError((err as Error).message);
     } finally {
       setSearching(false);
+    }
+  }
+
+  async function handleLoadMore() {
+    if (!allMatches) return;
+    setLoadingMore(true);
+    setError(null);
+    try {
+      const nextBatch = allMatches.slice(
+        visibleCount,
+        visibleCount + DETAIL_BATCH_SIZE,
+      );
+      setVisibleCount((v) => v + nextBatch.length);
+      await loadDetailsFor(nextBatch);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoadingMore(false);
     }
   }
 
@@ -87,6 +140,8 @@ export default function AddGamePage() {
       setAddingId(null);
     }
   }
+
+  const hasMore = allMatches ? visibleCount < allMatches.length : false;
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-12">
@@ -118,13 +173,13 @@ export default function AddGamePage() {
 
       {error && <p className="mt-4 text-sm text-accent">{error}</p>}
 
-      {sortedResults && (
+      {visibleResults && (
         <>
-          {sortedResults.length > 0 && (
+          {allMatches!.length > 0 && (
             <div className="mt-6 flex items-center justify-between text-sm">
               <span className="text-muted">
-                {sortedResults.length} result
-                {sortedResults.length === 1 ? "" : "s"}
+                Showing {visibleResults.length} of {allMatches!.length} match
+                {allMatches!.length === 1 ? "" : "es"}
               </span>
               <label className="flex items-center gap-2 text-muted">
                 Sort by
@@ -144,13 +199,14 @@ export default function AddGamePage() {
           )}
 
           <ul className="mt-3 flex flex-col gap-3">
-            {sortedResults.length === 0 && (
+            {allMatches!.length === 0 && (
               <p className="rounded-2xl border border-dashed border-border bg-surface p-8 text-center text-muted">
                 No results on BoardGameGeek for &quot;{query}&quot;.
               </p>
             )}
-            {sortedResults.map((r) => {
+            {visibleResults.map((r) => {
               const expanded = expandedId === r.bggId;
+              const isLoaded = Boolean(detailsMap[r.bggId]);
               return (
                 <li
                   key={r.bggId}
@@ -176,11 +232,13 @@ export default function AddGamePage() {
                             </span>
                           </p>
                           <p className="mt-0.5 text-xs text-muted">
-                            {r.bggRating ? `★ ${r.bggRating.toFixed(1)}` : "unrated"}
-                            {r.minPlayers && r.maxPlayers
-                              ? ` · ${r.minPlayers}–${r.maxPlayers} players`
-                              : ""}
-                            {r.playingTime ? ` · ${r.playingTime} min` : ""}
+                            {!isLoaded
+                              ? "loading details…"
+                              : `${r.bggRating ? `★ ${r.bggRating.toFixed(1)}` : "unrated"}${
+                                  r.minPlayers && r.maxPlayers
+                                    ? ` · ${r.minPlayers}–${r.maxPlayers} players`
+                                    : ""
+                                }${r.playingTime ? ` · ${r.playingTime} min` : ""}`}
                           </p>
                         </div>
                         {r.alreadyInLibrary ? (
@@ -221,6 +279,18 @@ export default function AddGamePage() {
               );
             })}
           </ul>
+
+          {hasMore && (
+            <button
+              onClick={handleLoadMore}
+              disabled={loadingMore}
+              className="mt-4 w-full rounded-full border border-border bg-surface py-2 text-sm text-foreground transition-colors hover:border-accent disabled:opacity-50"
+            >
+              {loadingMore
+                ? "Loading…"
+                : `Load ${Math.min(DETAIL_BATCH_SIZE, allMatches!.length - visibleCount)} more results`}
+            </button>
+          )}
         </>
       )}
 

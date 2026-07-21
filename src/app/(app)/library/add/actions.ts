@@ -9,66 +9,78 @@ import {
   deriveLuckLevel,
   deriveIsCooperative,
 } from "@/lib/bgg/skillLuck";
+import {
+  DETAIL_BATCH_SIZE,
+  type SearchListItem,
+  type GameDetails,
+} from "./types";
 
-// BGG's /thing endpoint hard-caps requests at 20 ids ("Cannot load more than 20 items").
-const MAX_CANDIDATES = 20;
-
-export interface SearchResultItem {
-  bggId: number;
-  name: string;
-  yearPublished: number | null;
-  image: string | null;
-  thumbnail: string | null;
-  description: string | null;
-  minPlayers: number | null;
-  maxPlayers: number | null;
-  playingTime: number | null;
-  weight: number | null;
-  bggRating: number | null;
-  alreadyInLibrary: boolean;
+function nameMatchRank(name: string, query: string): number {
+  const n = name.toLowerCase();
+  const q = query.toLowerCase();
+  if (n === q) return 0;
+  if (n.startsWith(q)) return 1;
+  if (n.includes(q)) return 2;
+  return 3;
 }
 
+/** Returns every matching game (name + year only), with close name matches
+ * ranked first so the base game surfaces above its expansions/variants. */
 export async function searchBggGames(
   query: string,
-): Promise<SearchResultItem[]> {
+): Promise<SearchListItem[]> {
   const session = await auth();
   if (!session?.user) throw new Error("Unauthorized");
   if (!query.trim()) return [];
 
   const results = await fetchSearch(query.trim());
-  const candidates = results.slice(0, MAX_CANDIDATES);
-  if (candidates.length === 0) return [];
+  const trimmedQuery = query.trim();
+
+  return [...results].sort((a, b) => {
+    const rankDiff =
+      nameMatchRank(a.name, trimmedQuery) - nameMatchRank(b.name, trimmedQuery);
+    if (rankDiff !== 0) return rankDiff;
+    return (b.yearPublished ?? 0) - (a.yearPublished ?? 0);
+  });
+}
+
+/** Fetches full details (rating, description, players, etc.) for up to
+ * DETAIL_BATCH_SIZE game ids at a time. */
+export async function getGameDetails(
+  bggIds: number[],
+): Promise<GameDetails[]> {
+  const session = await auth();
+  if (!session?.user) throw new Error("Unauthorized");
+
+  const batch = bggIds.slice(0, DETAIL_BATCH_SIZE);
+  if (batch.length === 0) return [];
 
   const [details, existing] = await Promise.all([
-    fetchThings(candidates.map((c) => c.bggId)),
+    fetchThings(batch),
     prisma.game.findMany({
-      where: { bggId: { in: candidates.map((c) => c.bggId) } },
+      where: { bggId: { in: batch } },
       select: { bggId: true, inLibrary: true },
     }),
   ]);
 
-  const detailsById = new Map(details.map((d) => [d.bggId, d]));
   const inLibraryIds = new Set(
     existing.filter((g) => g.inLibrary).map((g) => g.bggId),
   );
 
-  return candidates.map((c) => {
-    const d = detailsById.get(c.bggId);
-    return {
-      bggId: c.bggId,
-      name: d?.name ?? c.name,
-      yearPublished: c.yearPublished,
-      image: d?.image ?? null,
-      thumbnail: d?.thumbnail ?? null,
-      description: d?.description ?? null,
-      minPlayers: d?.minPlayers ?? null,
-      maxPlayers: d?.maxPlayers ?? null,
-      playingTime: d?.playingTime ?? null,
-      weight: d?.weight ?? null,
-      bggRating: d?.bggRating ?? null,
-      alreadyInLibrary: inLibraryIds.has(c.bggId),
-    };
-  });
+  return details.map((d) => ({
+    bggId: d.bggId,
+    name: d.name,
+    yearPublished: d.yearPublished,
+    image: d.image,
+    thumbnail: d.thumbnail,
+    description: d.description,
+    minPlayers: d.minPlayers,
+    maxPlayers: d.maxPlayers,
+    playingTime: d.playingTime,
+    weight: d.weight,
+    bggRating: d.bggRating,
+    alreadyInLibrary: inLibraryIds.has(d.bggId),
+  }));
 }
 
 export async function addGameToLibrary(bggId: number): Promise<{ gameId: string }> {
