@@ -113,7 +113,7 @@ export function parseThingXml(xml: string): ThingItem[] {
       maxPlayTime: num(item.maxplaytime?.["@_value"]),
       weight: num(ratings.averageweight?.["@_value"]),
       bggRating: num(ratings.average?.["@_value"]),
-      bggRank: extractRank(ratings),
+      bggRank: extractRank(ratings.ranks),
       categories,
       mechanisms,
     };
