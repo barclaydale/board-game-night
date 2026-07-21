@@ -106,6 +106,7 @@ export async function addGameToLibrary(bggId: number): Promise<{ gameId: string 
   const vibeTags = deriveVibeTags({
     categories: detail.categories,
     mechanisms: detail.mechanisms,
+    description: detail.description,
     weight: detail.weight,
     playingTime: detail.playingTime,
     maxPlayers: detail.maxPlayers,
@@ -129,7 +130,6 @@ export async function addGameToLibrary(bggId: number): Promise<{ gameId: string 
       description: detail.description,
       categories: detail.categories,
       mechanisms: detail.mechanisms,
-      autoVibeTags: vibeTags,
       vibeTags,
       skillLevel: deriveSkillLevel({
         mechanisms: detail.mechanisms,

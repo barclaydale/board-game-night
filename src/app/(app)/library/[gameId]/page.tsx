@@ -3,12 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import {
-  VIBE_TAGS,
-  VIBE_EMOJI,
-  VIBE_LABELS,
-  type VibeTag,
-} from "@/lib/bgg/vibeHeuristic";
+import { VIBE_EMOJI, VIBE_LABELS } from "@/lib/bgg/vibeHeuristic";
 import { LEVEL_DOTS } from "@/lib/bgg/skillLuck";
 
 interface GameDetailPageProps {
@@ -29,17 +24,6 @@ export default async function GameDetailPage({
   const myRating = await prisma.rating.findUnique({
     where: { userId_gameId: { userId, gameId } },
   });
-
-  async function saveVibeTags(formData: FormData) {
-    "use server";
-    const tags = formData.getAll("vibeTags") as VibeTag[];
-    await prisma.game.update({
-      where: { id: gameId },
-      data: { vibeTags: tags, vibeTagsOverridden: true },
-    });
-    revalidatePath(`/library/${gameId}`);
-    revalidatePath("/library");
-  }
 
   async function saveRating(formData: FormData) {
     "use server";
@@ -112,8 +96,22 @@ export default async function GameDetailPage({
         </p>
       )}
 
-      {(game.categories.length > 0 || game.mechanisms.length > 0) && (
+      {game.vibeTags.length > 0 && (
         <div className="mt-4 flex flex-wrap gap-2">
+          {game.vibeTags.map((tag) => (
+            <span
+              key={tag}
+              className="rounded-full bg-accent-soft px-3 py-1 text-xs text-accent"
+            >
+              {VIBE_EMOJI[tag as keyof typeof VIBE_EMOJI]}{" "}
+              {VIBE_LABELS[tag as keyof typeof VIBE_LABELS] ?? tag}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {(game.categories.length > 0 || game.mechanisms.length > 0) && (
+        <div className="mt-3 flex flex-wrap gap-2">
           {[...game.categories, ...game.mechanisms].map((label) => (
             <span
               key={label}
@@ -126,32 +124,6 @@ export default async function GameDetailPage({
       )}
 
       <section className="mt-10 rounded-2xl border border-border bg-surface p-5">
-        <h2 className="font-display text-sm font-semibold text-foreground">
-          Vibe tags
-        </h2>
-        <form action={saveVibeTags} className="mt-3 flex flex-col gap-2">
-          {VIBE_TAGS.map((tag) => (
-            <label key={tag} className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                name="vibeTags"
-                value={tag}
-                defaultChecked={game.vibeTags.includes(tag)}
-                className="accent-[var(--accent)]"
-              />
-              {VIBE_EMOJI[tag]} {VIBE_LABELS[tag]}
-            </label>
-          ))}
-          <button
-            type="submit"
-            className="mt-2 w-fit rounded-full bg-accent px-4 py-1.5 text-sm font-medium text-accent-foreground"
-          >
-            Save vibe tags
-          </button>
-        </form>
-      </section>
-
-      <section className="mt-6 rounded-2xl border border-border bg-surface p-5">
         <h2 className="font-display text-sm font-semibold text-foreground">
           Your rating
         </h2>

@@ -103,9 +103,7 @@ model Game {
   categories String[]
   mechanisms String[]
 
-  autoVibeTags       String[]
-  vibeTags           String[]
-  vibeTagsOverridden Boolean  @default(false)
+  vibeTags String[]
 
   inLibrary    Boolean  @default(true)
   lastSyncedAt DateTime @default(now())

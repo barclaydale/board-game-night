@@ -210,6 +210,20 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
                     ))}
                   </div>
                 )}
+                {[...game.categories, ...game.mechanisms].length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {[...game.categories, ...game.mechanisms]
+                      .slice(0, 5)
+                      .map((label) => (
+                        <span
+                          key={label}
+                          className="rounded-full bg-background px-2.5 py-0.5 text-xs text-muted"
+                        >
+                          {label}
+                        </span>
+                      ))}
+                  </div>
+                )}
               </Link>
             </li>
           ))}

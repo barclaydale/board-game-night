@@ -63,13 +63,13 @@ const games = rawGames.map((g) => {
   const vibeTags = deriveVibeTags({
     categories: g.categories,
     mechanisms: g.mechanisms,
+    description: g.description,
     weight: g.weight,
     playingTime: g.playingTime,
     maxPlayers: g.maxPlayers,
   });
   return {
     ...g,
-    autoVibeTags: vibeTags,
     vibeTags,
     skillLevel: deriveSkillLevel({ mechanisms: g.mechanisms, weight: g.weight }),
     luckLevel: deriveLuckLevel({ mechanisms: g.mechanisms, weight: g.weight }),
