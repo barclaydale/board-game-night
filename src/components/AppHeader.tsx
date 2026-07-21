@@ -5,7 +5,7 @@ const NAV_LINKS = [
   { href: "/library", label: "Library" },
   { href: "/recommend", label: "Recommend" },
   { href: "/plays", label: "Play history" },
-  { href: "/settings/import", label: "Import" },
+  { href: "/library/add", label: "Add games" },
 ];
 
 export async function AppHeader() {

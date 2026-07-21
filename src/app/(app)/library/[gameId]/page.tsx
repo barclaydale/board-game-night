@@ -58,11 +58,31 @@ export default async function GameDetailPage({
     revalidatePath(`/library/${gameId}`);
   }
 
+  async function removeFromLibrary() {
+    "use server";
+    await prisma.game.update({
+      where: { id: gameId },
+      data: { inLibrary: false },
+    });
+    revalidatePath("/library");
+    redirect("/library");
+  }
+
   return (
     <div className="mx-auto max-w-2xl px-6 py-12">
-      <Link href="/library" className="text-sm text-muted underline">
-        ← Library
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link href="/library" className="text-sm text-muted underline">
+          ← Library
+        </Link>
+        <form action={removeFromLibrary}>
+          <button
+            type="submit"
+            className="text-xs text-muted underline hover:text-accent"
+          >
+            Remove from library
+          </button>
+        </form>
+      </div>
 
       <div className="mt-4 flex items-baseline justify-between">
         <h1 className="font-display text-2xl font-semibold text-foreground">

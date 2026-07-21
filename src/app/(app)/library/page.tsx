@@ -161,8 +161,8 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
       {games.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-border bg-surface p-8 text-center text-muted">
           No games match. Try loosening the filters, or{" "}
-          <Link href="/settings/import" className="text-accent underline">
-            import your BGG collection
+          <Link href="/library/add" className="text-accent underline">
+            add a game
           </Link>
           .
         </p>

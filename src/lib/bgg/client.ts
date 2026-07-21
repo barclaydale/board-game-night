@@ -1,7 +1,7 @@
 import {
-  parseCollectionXml,
+  parseSearchXml,
   parseThingXml,
-  type CollectionItem,
+  type SearchItem,
   type ThingItem,
 } from "@/lib/bgg/xml";
 
@@ -15,29 +15,18 @@ function authHeaders(): HeadersInit {
   return { Authorization: `Bearer ${token}` };
 }
 
-export type CollectionResult =
-  | { status: "ready"; items: CollectionItem[] }
-  | { status: "pending" }
-  | { status: "error"; message: string };
-
-export async function fetchCollection(
-  username: string,
-): Promise<CollectionResult> {
-  const url = `${BGG_BASE}/collection?username=${encodeURIComponent(username)}&stats=1&own=1&excludesubtype=boardgameexpansion`;
+export async function fetchSearch(query: string): Promise<SearchItem[]> {
+  const url = `${BGG_BASE}/search?query=${encodeURIComponent(query)}&type=boardgame`;
   const res = await fetch(url, { headers: authHeaders() });
 
-  if (res.status === 202) {
-    return { status: "pending" };
-  }
   if (!res.ok) {
-    return {
-      status: "error",
-      message: `BGG collection request failed: ${res.status} ${await res.text()}`,
-    };
+    throw new Error(
+      `BGG search request failed: ${res.status} ${await res.text()}`,
+    );
   }
 
   const xml = await res.text();
-  return { status: "ready", items: parseCollectionXml(xml) };
+  return parseSearchXml(xml);
 }
 
 export async function fetchThings(ids: number[]): Promise<ThingItem[]> {

@@ -19,20 +19,10 @@ function num(value: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-export interface CollectionItem {
+export interface SearchItem {
   bggId: number;
   name: string;
   yearPublished: number | null;
-  image: string | null;
-  thumbnail: string | null;
-  minPlayers: number | null;
-  maxPlayers: number | null;
-  playingTime: number | null;
-  minPlayTime: number | null;
-  maxPlayTime: number | null;
-  weight: number | null;
-  bggRating: number | null;
-  bggRank: number | null;
 }
 
 export interface ThingItem {
@@ -67,29 +57,21 @@ function extractRank(ranksNode: unknown): number | null {
   return num(value);
 }
 
-export function parseCollectionXml(xml: string): CollectionItem[] {
+export function parseSearchXml(xml: string): SearchItem[] {
   const doc = parser.parse(xml);
   const items = toArray<Record<string, any>>(doc?.items?.item);
 
   return items.map((item) => {
-    const stats = item.stats ?? {};
-    const rating = stats.rating ?? {};
+    const names = toArray<Record<string, any>>(item.name);
+    const primaryName =
+      names.find((n) => n["@_type"] === "primary")?.["@_value"] ??
+      names[0]?.["@_value"] ??
+      "";
 
     return {
-      bggId: num(item["@_objectid"]) ?? 0,
-      name:
-        typeof item.name === "object" ? item.name["#text"] ?? "" : item.name,
-      yearPublished: num(item.yearpublished),
-      image: item.image ?? null,
-      thumbnail: item.thumbnail ?? null,
-      minPlayers: num(stats["@_minplayers"]),
-      maxPlayers: num(stats["@_maxplayers"]),
-      playingTime: num(stats["@_playingtime"]),
-      minPlayTime: num(stats["@_minplaytime"]),
-      maxPlayTime: num(stats["@_maxplaytime"]),
-      weight: num(stats.averageweight?.["@_value"]),
-      bggRating: num(rating.average?.["@_value"]),
-      bggRank: extractRank(rating.ranks),
+      bggId: num(item["@_id"]) ?? 0,
+      name: primaryName,
+      yearPublished: num(item.yearpublished?.["@_value"]),
     };
   });
 }
