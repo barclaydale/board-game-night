@@ -9,9 +9,20 @@ import {
   deriveLuckLevel,
   deriveIsCooperative,
 } from "@/lib/bgg/skillLuck";
-import type { SearchItem } from "@/lib/bgg/xml";
+const MAX_CANDIDATES = 25;
 
-export interface SearchResultItem extends SearchItem {
+export interface SearchResultItem {
+  bggId: number;
+  name: string;
+  yearPublished: number | null;
+  image: string | null;
+  thumbnail: string | null;
+  description: string | null;
+  minPlayers: number | null;
+  maxPlayers: number | null;
+  playingTime: number | null;
+  weight: number | null;
+  bggRating: number | null;
   alreadyInLibrary: boolean;
 }
 
@@ -23,17 +34,39 @@ export async function searchBggGames(
   if (!query.trim()) return [];
 
   const results = await fetchSearch(query.trim());
-  const top = results.slice(0, 20);
+  const candidates = results.slice(0, MAX_CANDIDATES);
+  if (candidates.length === 0) return [];
 
-  const existing = await prisma.game.findMany({
-    where: { bggId: { in: top.map((r) => r.bggId) } },
-    select: { bggId: true, inLibrary: true },
-  });
+  const [details, existing] = await Promise.all([
+    fetchThings(candidates.map((c) => c.bggId)),
+    prisma.game.findMany({
+      where: { bggId: { in: candidates.map((c) => c.bggId) } },
+      select: { bggId: true, inLibrary: true },
+    }),
+  ]);
+
+  const detailsById = new Map(details.map((d) => [d.bggId, d]));
   const inLibraryIds = new Set(
     existing.filter((g) => g.inLibrary).map((g) => g.bggId),
   );
 
-  return top.map((r) => ({ ...r, alreadyInLibrary: inLibraryIds.has(r.bggId) }));
+  return candidates.map((c) => {
+    const d = detailsById.get(c.bggId);
+    return {
+      bggId: c.bggId,
+      name: d?.name ?? c.name,
+      yearPublished: c.yearPublished,
+      image: d?.image ?? null,
+      thumbnail: d?.thumbnail ?? null,
+      description: d?.description ?? null,
+      minPlayers: d?.minPlayers ?? null,
+      maxPlayers: d?.maxPlayers ?? null,
+      playingTime: d?.playingTime ?? null,
+      weight: d?.weight ?? null,
+      bggRating: d?.bggRating ?? null,
+      alreadyInLibrary: inLibraryIds.has(c.bggId),
+    };
+  });
 }
 
 export async function addGameToLibrary(bggId: number): Promise<{ gameId: string }> {
