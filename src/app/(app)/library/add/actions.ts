@@ -9,7 +9,9 @@ import {
   deriveLuckLevel,
   deriveIsCooperative,
 } from "@/lib/bgg/skillLuck";
-const MAX_CANDIDATES = 25;
+
+// BGG's /thing endpoint hard-caps requests at 20 ids ("Cannot load more than 20 items").
+const MAX_CANDIDATES = 20;
 
 export interface SearchResultItem {
   bggId: number;
