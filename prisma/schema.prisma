@@ -138,6 +138,8 @@ model PlayParticipant {
   playId    String
   userId    String?
   guestName String?
+  score     Int?
+  notes     String? @db.Text
 
   play Play  @relation(fields: [playId], references: [id], onDelete: Cascade)
   user User? @relation(fields: [userId], references: [id])

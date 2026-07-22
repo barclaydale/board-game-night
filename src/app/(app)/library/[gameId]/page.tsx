@@ -180,8 +180,8 @@ export default async function GameDetailPage({
         ) : (
           <ul className="mt-3 flex flex-col gap-3">
             {plays.map((play) => {
-              const names = play.participants.map(
-                (p) => p.user?.name ?? p.guestName ?? "?",
+              const sortedParticipants = [...play.participants].sort(
+                (a, b) => (b.score ?? -Infinity) - (a.score ?? -Infinity),
               );
               return (
                 <li
@@ -198,8 +198,25 @@ export default async function GameDetailPage({
                       </span>
                     )}
                   </div>
-                  {names.length > 0 && (
-                    <p className="mt-1 text-muted">with {names.join(", ")}</p>
+                  {sortedParticipants.length > 0 && (
+                    <ul className="mt-2 flex flex-col gap-0.5">
+                      {sortedParticipants.map((p) => (
+                        <li
+                          key={p.id}
+                          className="flex items-baseline justify-between text-muted"
+                        >
+                          <span>
+                            {p.user?.name ?? p.guestName ?? "?"}
+                            {p.notes ? ` — ${p.notes}` : ""}
+                          </span>
+                          {p.score !== null && (
+                            <span className="ml-2 shrink-0 text-foreground">
+                              {p.score}
+                            </span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
                   )}
                   {play.notes && (
                     <p className="mt-1 text-xs text-muted">{play.notes}</p>
