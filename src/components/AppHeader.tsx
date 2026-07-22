@@ -13,7 +13,7 @@ export async function AppHeader() {
 
   return (
     <header className="border-b border-border bg-background">
-      <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
+      <div className="mx-auto flex max-w-3xl flex-col gap-2 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
         <Link
           href="/"
           className="font-display text-lg font-semibold tracking-tight text-foreground"
@@ -21,7 +21,7 @@ export async function AppHeader() {
           🎲 Board Game Night
         </Link>
 
-        <nav className="flex items-center gap-5 text-sm text-muted">
+        <nav className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-muted">
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
